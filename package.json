@@ -1,0 +1,19 @@
+{
+  "name": "discord-bot-3ds",
+  "version": "1.0.0",
+  "description": "A Discord bot for 3DS homebrew releases",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "@discordjs/rest": "^1.7.1",
+    "discord-api-types": "^0.37.50",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^3.3.2"
+  },
+  "keywords": ["discord", "bot", "3ds"],
+  "author": "",
+  "license": "ISC"
+}
