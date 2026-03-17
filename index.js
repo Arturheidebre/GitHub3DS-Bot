@@ -37,6 +37,10 @@ const commands = [
         name: 'bug',
         description: 'Report a bug',
     },
+    {
+        name: 'install-guide',
+        description: 'How to install GitHub3DS on your 3DS',
+    },
 ];
 
 const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
@@ -137,6 +141,50 @@ client.on('interactionCreate', async interaction => {
             modal.addComponents(row1, row2);
 
             await interaction.showModal(modal);
+        }
+
+        // INSTALL GUIDE COMMAND
+        else if (interaction.commandName === 'install-guide') {
+            const embed = new EmbedBuilder()
+                .setTitle('📖 How to Install GitHub3DS')
+                .setColor(0x00aaff)
+                .setThumbnail('https://gitlab.com/MorrisTheGamer/github3ds/-/raw/main/files/qr-code.png')
+                .addFields(
+                    {
+                        name: '📋 Requirements',
+                        value: '> • A hacked Nintendo 3DS\n> • FBI or another CIA installer',
+                        inline: false
+                    },
+                    {
+                        name: '1️⃣ Open FBI',
+                        value: '> Open **FBI** or another CIA installer on your Nintendo 3DS.',
+                        inline: false
+                    },
+                    {
+                        name: '2️⃣ Install GitHub3DS',
+                        value: '> Install **GitHub3DS** using the CIA file or scan the QR code shown above.',
+                        inline: false
+                    },
+                    {
+                        name: '3️⃣ Done!',
+                        value: '> GitHub3DS will appear on your **3DS Home Menu** after installation.',
+                        inline: false
+                    },
+                    {
+                        name: '📦 Get the latest CIA',
+                        value: '> Use `/cia latest` to download the newest version!',
+                        inline: false
+                    },
+                    {
+                        name: '⚠️ Disclaimer',
+                        value: '> Only download legal files. GitHub3DS does not host any files itself.',
+                        inline: false
+                    }
+                )
+                .setFooter({ text: 'GitHub3DS • Free & Open Source' })
+                .setTimestamp();
+
+            await interaction.reply({ embeds: [embed] });
         }
     }
 
