@@ -30,6 +30,10 @@ const commands = [
         ],
     },
     {
+        name: 'latest',
+        description: 'Get latest full release (CIA + 3DSX)',
+    },
+    {
         name: 'shutdown',
         description: 'Shutdown the bot (owner only)',
     },
@@ -64,7 +68,12 @@ const onClientReady = () => {
     console.log(`Logged in as ${client.user.tag}!`);
 
     let statusIndex = 0;
-    const statuses = ['GitHub3DS', 'TML'];
+    const statuses = [
+        'GitHub3DS',
+        'TML',
+        'https://github3ds.vercel.app/',
+        'Hosted via Artendo'
+    ];
 
     setInterval(() => {
         client.user.setActivity(statuses[statusIndex]);
@@ -77,7 +86,6 @@ client.once('clientReady', onClientReady);
 
 client.on('interactionCreate', async interaction => {
 
-    // ========== SLASH COMMANDS ==========
     if (interaction.isChatInputCommand()) {
 
         // CIA COMMAND
@@ -90,6 +98,7 @@ client.on('interactionCreate', async interaction => {
 
                     const tagName = latestRelease.tag_name;
                     const changelog = latestRelease.description;
+
                     const downloadUrl =
                         latestRelease.assets?.links?.[0]?.direct_asset_url ||
                         latestRelease._links.self;
@@ -104,7 +113,57 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // SHUTDOWN COMMAND
+        // 🔥 LATEST COMMAND (NEU)
+        else if (interaction.commandName === 'latest') {
+            try {
+                const response = await fetch('https://gitlab.com/api/v4/projects/MorrisTheGamer%2Fgithub3ds/releases');
+                const data = await response.json();
+                const latestRelease = data[0];
+
+                const tagName = latestRelease.tag_name;
+                const changelog = latestRelease.description || "No changelog provided.";
+
+                let ciaUrl = null;
+                let dsxUrl = null;
+
+                const links = latestRelease.assets?.links || [];
+
+                for (const link of links) {
+                    if (link.name.endsWith('.cia')) {
+                        ciaUrl = link.direct_asset_url;
+                    }
+                    if (link.name.endsWith('.3dsx')) {
+                        dsxUrl = link.direct_asset_url;
+                    }
+                }
+
+                const embed = new EmbedBuilder()
+                    .setTitle(`🚀 Latest Release: ${tagName}`)
+                    .setColor(0x00ff99)
+                    .setDescription(changelog.substring(0, 1000))
+                    .addFields(
+                        {
+                            name: '📦 CIA',
+                            value: ciaUrl ? `[Download](${ciaUrl})` : '❌ Not available',
+                            inline: true
+                        },
+                        {
+                            name: '🧩 3DSX',
+                            value: dsxUrl ? `[Download](${dsxUrl})` : '❌ Not available',
+                            inline: true
+                        }
+                    )
+                    .setTimestamp();
+
+                await interaction.reply({ embeds: [embed] });
+
+            } catch (error) {
+                console.error(error);
+                await interaction.reply('Error fetching latest release.');
+            }
+        }
+
+        // SHUTDOWN
         else if (interaction.commandName === 'shutdown') {
             if (interaction.user.id !== process.env.DISCORD_OWNER_ID) {
                 await interaction.reply({ content: 'You are not allowed to do that.', ephemeral: true });
@@ -116,7 +175,7 @@ client.on('interactionCreate', async interaction => {
             process.exit(0);
         }
 
-        // BUG COMMAND → OPEN MODAL
+        // BUG COMMAND
         else if (interaction.commandName === 'bug') {
 
             const modal = new ModalBuilder()
@@ -143,7 +202,7 @@ client.on('interactionCreate', async interaction => {
             await interaction.showModal(modal);
         }
 
-        // INSTALL GUIDE COMMAND
+        // INSTALL GUIDE
         else if (interaction.commandName === 'install-guide') {
             const embed = new EmbedBuilder()
                 .setTitle('📖 How to Install GitHub3DS')
@@ -153,32 +212,18 @@ client.on('interactionCreate', async interaction => {
                     {
                         name: '📋 Requirements',
                         value: '> • A hacked Nintendo 3DS\n> • FBI or another CIA installer',
-                        inline: false
                     },
                     {
                         name: '1️⃣ Open FBI',
-                        value: '> Open **FBI** or another CIA installer on your Nintendo 3DS.',
-                        inline: false
+                        value: '> Open **FBI** on your 3DS.',
                     },
                     {
-                        name: '2️⃣ Install GitHub3DS',
-                        value: '> Install **GitHub3DS** using the CIA file or scan the QR code shown above.',
-                        inline: false
+                        name: '2️⃣ Install',
+                        value: '> Install the CIA or scan QR code.',
                     },
                     {
                         name: '3️⃣ Done!',
-                        value: '> GitHub3DS will appear on your **3DS Home Menu** after installation.',
-                        inline: false
-                    },
-                    {
-                        name: '📦 Get the latest CIA',
-                        value: '> Use `/cia latest` to download the newest version!',
-                        inline: false
-                    },
-                    {
-                        name: '⚠️ Disclaimer',
-                        value: '> Only download legal files. GitHub3DS does not host any files itself.',
-                        inline: false
+                        value: '> App appears on Home Menu.',
                     }
                 )
                 .setFooter({ text: 'GitHub3DS • Free & Open Source' })
@@ -188,7 +233,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // ========== MODAL SUBMIT ==========
+    // MODAL SUBMIT
     if (interaction.isModalSubmit()) {
         if (interaction.customId === 'bugModal') {
 
@@ -211,9 +256,9 @@ client.on('interactionCreate', async interaction => {
                 .setTitle('🐛 New Bug Report')
                 .setColor(0xff0000)
                 .addFields(
-                    { name: '👤 User', value: `<@${interaction.user.id}>`, inline: false },
-                    { name: '📦 Version', value: version, inline: false },
-                    { name: '📝 Description', value: description, inline: false }
+                    { name: '👤 User', value: `<@${interaction.user.id}>` },
+                    { name: '📦 Version', value: version },
+                    { name: '📝 Description', value: description }
                 )
                 .setTimestamp();
 
@@ -229,7 +274,7 @@ client.on('interactionCreate', async interaction => {
 
 client.login(process.env.DISCORD_TOKEN);
 
-// HTTP Server (Render)
+// HTTP Server
 const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('Bot is running\n');
